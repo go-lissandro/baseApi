@@ -1,7 +1,7 @@
 package app
 
 import (
-	"goRest/goRest/controllers"
+	"goRest/controllers"
 
 	"github.com/gofiber/fiber/v2"
 )

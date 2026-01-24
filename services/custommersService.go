@@ -1,8 +1,8 @@
 package services
 
 import (
-	"goRest/goRest/models"
-	"goRest/goRest/repository"
+	"goRest/models"
+	"goRest/repository"
 )
 
 type CustommersRepository struct {

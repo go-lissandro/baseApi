@@ -1,8 +1,8 @@
 package controllers
 
 import (
-	"goRest/goRest/models"
-	"goRest/goRest/services"
+	"goRest/models"
+	"goRest/services"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"

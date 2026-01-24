@@ -1,11 +1,11 @@
 package main
 
 import (
-	r "goRest/goRest/app"
-	"goRest/goRest/configs"
-	"goRest/goRest/controllers"
-	"goRest/goRest/repository"
-	"goRest/goRest/services"
+	r "goRest/app"
+	"goRest/configs"
+	"goRest/controllers"
+	"goRest/repository"
+	"goRest/services"
 
 	"github.com/gofiber/fiber/v2"
 )

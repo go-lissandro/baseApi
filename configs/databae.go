@@ -1,7 +1,7 @@
 package configs
 
 import (
-	"goRest/goRest/models"
+	"goRest/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"goRest/goRest/models"
+	"goRest/models"
 	"log"
 
 	"gorm.io/gorm"
