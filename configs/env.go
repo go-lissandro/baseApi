@@ -17,6 +17,16 @@ func getKeyEnv(key string) string {
 	return value
 }
 
+func EnvJWTSecret() string {
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Faltou o arquivo .env")
+	}
+
+	SecretJWT := getKeyEnv("JWT_SECRET")
+
+	return SecretJWT
+}
+
 func EnvConfigDBUrl() string {
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Faltou o arquivo .env")
