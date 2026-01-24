@@ -1,11 +1,10 @@
 package middlewre
 
 import (
-	"context"
 	"goRest/configs"
-	"net/http"
 	"strings"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -43,40 +42,40 @@ func ValidateToken(tokenString string) (Role, error) {
 	if !ok {
 		return "", jwt.ErrInvalidKey
 	}
+
 	return Role(role), nil
 }
 
-func RoleValidationMiddleware(requiredRoles ...Role) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
+func RoleValidationMiddleware(requiredRoles ...Role) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		authHeader := c.Get("Authorization")
 
-			if authHeader == "" {
-				http.Error(w, "Missing Authorization Header", http.StatusUnauthorized)
-				return
+		if authHeader == "" {
+			return c.Status(fiber.StatusUnauthorized).
+				JSON(fiber.Map{"error": "Missing Authorization Header"})
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		role, err := ValidateToken(tokenString)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).
+				JSON(fiber.Map{"error": "Invalid Token"})
+		}
+
+		authorized := false
+		for _, reqRole := range requiredRoles {
+			if role == reqRole {
+				authorized = true
+				break
 			}
+		}
 
-			tokenString := strings.TrimPrefix(authHeader, "Bearer")
-
-			role, err := ValidateToken(tokenString)
-
-			if err != nil {
-				http.Error(w, "Invalid Token", http.StatusUnauthorized)
-				return
-			}
-
-			authorized := false
-			for _, reqRole := range requiredRoles {
-				if role == reqRole {
-					authorized = true
-					break
-				}
-			}
-			if !authorized {
-				http.Error(w, "Acess Denied", http.StatusForbidden)
-			}
-			ctx := context.WithValue(r.Context(), roleCtxKey, role)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
+		if !authorized {
+			return c.Status(fiber.StatusForbidden).
+				JSON(fiber.Map{"error": "Access Denied"})
+		}
+		c.Locals(roleCtxKey, role)
+		return c.Next()
 	}
 }
