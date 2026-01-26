@@ -21,12 +21,6 @@ func (b *Base) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-type User struct {
-	Base
-	Username string `gorm:"size:255;not null;unique" json:"username"`
-	Email    string `gorm:"uniqueIndex;not null" json:"email"`
-}
-
 type Custommer struct {
 	Base
 	Body     string `gorm:"size:255;not null" json:"body"`

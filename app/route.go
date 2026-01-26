@@ -2,6 +2,7 @@ package app
 
 import (
 	"goRest/controllers"
+	"goRest/handler"
 	middlewre "goRest/middleware"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,6 +12,7 @@ func SetupCustommersRoutes(c *fiber.App, cs controllers.CustommersController) {
 
 	route := c.Group("/api")
 	v1 := route.Group("/v1")
+	v1.Post("/login", handler.LoginHandler)
 
 	v1.Post("/custommers", cs.CreateCustommers)
 
