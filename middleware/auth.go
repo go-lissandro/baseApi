@@ -3,6 +3,7 @@ package middlewre
 import (
 	"goRest/configs"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -78,4 +79,15 @@ func RoleValidationMiddleware(requiredRoles ...Role) fiber.Handler {
 		c.Locals(roleCtxKey, role)
 		return c.Next()
 	}
+}
+
+func GenerateToken(userID string, role Role) (string, error) {
+	claims := jwt.MapClaims{
+		"sub":  userID,
+		"role": role,
+		"exp":  time.Now().Add(24 * time.Hour),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(SecretJWT)
 }
