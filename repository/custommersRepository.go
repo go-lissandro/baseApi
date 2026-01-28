@@ -34,6 +34,27 @@ func (cdb CustommersDB) GetAll() []models.Custommer {
 	return custommers
 }
 
+func (cdb CustommersDB) GetByID(cdbId string) models.Custommer {
+	var custommer models.Custommer
+	cdb.DB.Find(&custommer, cdbId)
+
+	return custommer
+}
+
+func (cdb CustommersDB) DeleteCustommer(cbdId string) {
+	var custommer models.Custommer
+	cdb.DB.Delete(&custommer, cbdId)
+}
+
+func (cdb CustommersDB) UpdateCustommer(cdbId string, body models.Custommer) models.Custommer {
+	var custommer models.Custommer
+
+	cdb.DB.Find(&custommer, cdbId)
+	cdb.DB.Model(&custommer)
+
+	return custommer
+}
+
 func NewCustommersDB(dbClient *gorm.DB) *CustommersDB {
 	return &CustommersDB{dbClient}
 }
