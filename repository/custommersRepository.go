@@ -14,6 +14,9 @@ type CustommersDB struct {
 type CustommersRepository interface {
 	Insert(custommer models.Custommer) error
 	GetAll() []models.Custommer
+	UpdateCustommer(body models.Custommer, cId string) models.Custommer
+	DeleteCustommer(cId string)
+	GetByID(cId string) models.Custommer
 }
 
 func (cdb CustommersDB) Insert(custommer models.Custommer) error {
@@ -34,9 +37,9 @@ func (cdb CustommersDB) GetAll() []models.Custommer {
 	return custommers
 }
 
-func (cdb CustommersDB) GetByID(cdbId string) models.Custommer {
+func (cdb CustommersDB) GetByID(cId string) models.Custommer {
 	var custommer models.Custommer
-	cdb.DB.Find(&custommer, cdbId)
+	cdb.DB.Find(&custommer, cId)
 
 	return custommer
 }
@@ -46,10 +49,10 @@ func (cdb CustommersDB) DeleteCustommer(cbdId string) {
 	cdb.DB.Delete(&custommer, cbdId)
 }
 
-func (cdb CustommersDB) UpdateCustommer(cdbId string, body models.Custommer) models.Custommer {
+func (cdb CustommersDB) UpdateCustommer(body models.Custommer, cId string) models.Custommer {
 	var custommer models.Custommer
 
-	cdb.DB.Find(&custommer, cdbId)
+	cdb.DB.Find(&custommer, cId)
 	cdb.DB.Model(&custommer)
 
 	return custommer
