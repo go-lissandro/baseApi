@@ -15,6 +15,7 @@ type UsersDB struct {
 
 type UserRepository interface {
 	UserInsert(custummer models.User) error
+	FindUserByEmail(email string) (models.User, error)
 }
 
 func (udb UsersDB) UserInsert(user models.User) error {
@@ -26,7 +27,8 @@ func (udb UsersDB) UserInsert(user models.User) error {
 		log.Printf("erro hash %s", err)
 		return err
 	}
-	if resultUser := udb.DB.Find(&useeers); resultUser.Error != nil {
+	resultUser := udb.DB.First(&useeers)
+	if resultUser.Error != nil {
 		log.Printf("user userRepository: %s", resultUser.Error)
 		return resultUser.Error
 	}
@@ -44,6 +46,16 @@ func (udb UsersDB) UserInsert(user models.User) error {
 
 	return nil
 
+}
+
+func (udb UsersDB) FindUserByEmail(email string) (models.User, error) {
+	var user models.User
+
+	result := udb.DB.Where("email = ?", email).First(&user)
+	if result.Error != nil {
+		return models.User{}, result.Error
+	}
+	return user, nil
 }
 
 func existUser(user models.User, body models.User) (bool, string) {
