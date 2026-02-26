@@ -6,13 +6,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func NormalizePassword(p string) []byte {
-	return []byte(p)
-}
-
 func GenerateHashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword(
-		NormalizePassword(password),
+		[]byte(password),
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
@@ -23,12 +19,13 @@ func GenerateHashPassword(password string) (string, error) {
 
 func CheckPassword(hash, password string) bool {
 	err := bcrypt.CompareHashAndPassword(
-		NormalizePassword(hash),
-		NormalizePassword(password),
+		[]byte(hash),
+		[]byte(password),
 	)
 	if err != nil {
-		fmt.Println("erro ao checar hash", err)
+		fmt.Println("erro ao checar hash", []byte(hash), []byte(hash), err)
+		return false
 	}
 
-	return err == nil
+	return true
 }
