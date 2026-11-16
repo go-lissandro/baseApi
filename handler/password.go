@@ -12,7 +12,7 @@ func GenerateHashPassword(password string) (string, error) {
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		fmt.Println("erro ao gerar hash,", err)
+		return "", fmt.Errorf("erro ao gerar hash: %w", err)
 	}
 	return string(bytes), nil
 }
@@ -23,7 +23,6 @@ func CheckPassword(hash, password string) bool {
 		[]byte(password),
 	)
 	if err != nil {
-		fmt.Println("erro ao checar hash", []byte(hash), []byte(hash), err)
 		return false
 	}
 

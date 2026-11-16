@@ -40,7 +40,7 @@ func (cs CustommersService) CreateCustommers(c *fiber.Ctx) error {
 func (cs CustommersService) GetCustommers(c *fiber.Ctx) error {
 	var custommers = cs.Service.CustommerGet()
 
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "get",
 		"teste":   custommers,
 	})

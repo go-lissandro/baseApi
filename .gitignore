@@ -17,7 +17,6 @@
 
 # Cache do Go
 /go.work.sum
-/go.sum
 /pkg/
 /tmp/
 
