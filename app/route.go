@@ -17,11 +17,13 @@ func SetupCustommersRoutes(c *fiber.App, cs controllers.CustommersController, us
 
 	v1.Post("/custommers", cs.CreateCustommers)
 
-	v1.Group("/admin", middlewre.RoleValidationMiddleware(middlewre.RoleAdmin))
+	// O grupo precisa ser guardado: antes o retorno era descartado e as rotas
+	// /admin ficavam registradas em v1, sem nenhuma autenticação.
+	admin := v1.Group("/admin", middlewre.RoleValidationMiddleware(middlewre.RoleAdmin))
 
-	v1.Get("/admin/custommers", cs.GetCustommers)
-	v1.Get("/admin", func(c *fiber.Ctx) error {
-		role := c.Locals("userRole").(middlewre.Role)
+	admin.Get("/custommers", cs.GetCustommers)
+	admin.Get("/", func(c *fiber.Ctx) error {
+		role, _ := c.Locals(middlewre.RoleCtxKey).(middlewre.Role)
 		return c.JSON(fiber.Map{
 			"message": "Bem-vindo admin",
 			"role":    role,

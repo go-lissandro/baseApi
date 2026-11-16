@@ -33,6 +33,8 @@ func (us UserService) RegisterUser(c *fiber.Ctx) error {
 		})
 	}
 
+	user.Role = string(middlewre.RoleUser)
+
 	err := us.Service.UserInsert(user)
 
 	if err != nil {
@@ -44,7 +46,10 @@ func (us UserService) RegisterUser(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Usuario criado",
-		"body":    user,
+		"body": fiber.Map{
+			"username": user.Username,
+			"email":    user.Email,
+		},
 	})
 }
 
@@ -55,21 +60,21 @@ func (us UserService) LoginHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid body request", "msg": err})
 	}
 	findUser, err := us.Service.UserFind(body.Email)
+	if err != nil || !handler.CheckPassword(findUser.Password, body.Password) {
+		// Mesma resposta para e-mail inexistente e senha errada
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Credenciais invalidas"})
+	}
+
+	role := middlewre.Role(findUser.Role)
+	if role == "" {
+		role = middlewre.RoleUser
+	}
+
+	token, err := middlewre.GenerateToken(findUser.ID, role)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Erro ao buscar usaurio", "msg": err})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Erro ao gerar token"})
 	}
-
-	if handler.CheckPassword(findUser.Password, body.Password) {
-		token, err := middlewre.GenerateToken("1", middlewre.RoleAdmin)
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Erro ao errar token", "msg": err})
-		}
-		return c.JSON(fiber.Map{"token": token})
-
-	}
-
-	return c.JSON(fiber.Map{"invalid": "Credenciais Invalida"})
+	return c.JSON(fiber.Map{"token": token})
 }
 
 func NewUserController(service services.UserService) *UserService {

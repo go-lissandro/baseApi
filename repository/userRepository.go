@@ -19,22 +19,27 @@ type UserRepository interface {
 }
 
 func (udb UsersDB) UserInsert(user models.User) error {
-	var useeers models.User
-	pass := user.Password
-	hash, err := handler.GenerateHashPassword(pass)
+	if user.Email == "" || user.Username == "" || user.Password == "" {
+		return errors.New("username, email e password sao obrigatorios")
+	}
 
+	// Antes usava DB.First(), que pegava um usuário qualquer e falhava com
+	// "record not found" quando a tabela estava vazia (primeiro cadastro).
+	var existing []models.User
+	if err := udb.DB.Where("email = ? OR username = ?", user.Email, user.Username).Find(&existing).Error; err != nil {
+		log.Printf("user userRepository: %s", err)
+		return err
+	}
+	for _, u := range existing {
+		if isUser, messageErr := existUser(u, user); isUser {
+			return errors.New(messageErr)
+		}
+	}
+
+	hash, err := handler.GenerateHashPassword(user.Password)
 	if err != nil {
 		log.Printf("erro hash %s", err)
 		return err
-	}
-	resultUser := udb.DB.First(&useeers)
-	if resultUser.Error != nil {
-		log.Printf("user userRepository: %s", resultUser.Error)
-		return resultUser.Error
-	}
-	isUser, messageErr := existUser(useeers, user)
-	if isUser == true {
-		return errors.New(messageErr)
 	}
 
 	user.Password = hash

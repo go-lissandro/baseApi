@@ -3,6 +3,7 @@ package middlewre
 import (
 	"goRest/configs"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,35 +17,44 @@ const (
 	RoleUser  Role = "user"
 )
 
-var SecretJWT = []byte(configs.EnvJWTSecret())
+// secretJWT é lido sob demanda (uma vez) para não exigir JWT_SECRET já na
+// inicialização do pacote, o que dificultava testes.
+var secretJWT = sync.OnceValue(func() []byte { return []byte(configs.EnvJWTSecret()) })
 
-type ctxKey string
+// Chaves usadas em c.Locals para expor os dados do token aos handlers
+const (
+	RoleCtxKey   = "userRole"
+	UserIDCtxKey = "userID"
+)
 
-const roleCtxKey ctxKey = "userRole"
-
-func ValidateToken(tokenString string) (Role, error) {
+func ValidateToken(tokenString string) (Role, string, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return SecretJWT, nil
+		return secretJWT(), nil
 	})
 
-	if err != nil || !token.Valid {
-		return "", err
+	if err != nil {
+		return "", "", err
+	}
+	if !token.Valid {
+		return "", "", jwt.ErrTokenSignatureInvalid
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return "", jwt.ErrInvalidKey
+		return "", "", jwt.ErrInvalidKey
 	}
 
 	role, ok := claims["role"].(string)
 	if !ok {
-		return "", jwt.ErrInvalidKey
+		return "", "", jwt.ErrInvalidKey
 	}
 
-	return Role(role), nil
+	userID, _ := claims["sub"].(string)
+
+	return Role(role), userID, nil
 }
 
 func RoleValidationMiddleware(requiredRoles ...Role) fiber.Handler {
@@ -58,7 +68,7 @@ func RoleValidationMiddleware(requiredRoles ...Role) fiber.Handler {
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		role, err := ValidateToken(tokenString)
+		role, userID, err := ValidateToken(tokenString)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).
 				JSON(fiber.Map{"error": "Invalid Token"})
@@ -76,7 +86,8 @@ func RoleValidationMiddleware(requiredRoles ...Role) fiber.Handler {
 			return c.Status(fiber.StatusForbidden).
 				JSON(fiber.Map{"error": "Access Denied"})
 		}
-		c.Locals(roleCtxKey, role)
+		c.Locals(RoleCtxKey, role)
+		c.Locals(UserIDCtxKey, userID)
 		return c.Next()
 	}
 }
@@ -84,10 +95,13 @@ func RoleValidationMiddleware(requiredRoles ...Role) fiber.Handler {
 func GenerateToken(userID string, role Role) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":  userID,
-		"role": role,
-		"exp":  time.Now().Add(24 * time.Hour),
+		"role": string(role),
+		// exp precisa ser numérico (Unix): time.Time era serializado como texto
+		// e fazia o jwt/v5 rejeitar todo token gerado aqui.
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
+		"iat": time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(SecretJWT)
+	return token.SignedString(secretJWT())
 }
